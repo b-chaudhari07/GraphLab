@@ -158,7 +158,7 @@ export const AlgorithmPanel: React.FC<AlgorithmPanelProps> = ({
           <button
             className="btn btn-success btn-sm"
             onClick={onRunAlgorithm}
-            disabled={isRunning || (currentAlgorithm?.requiresStartVertex && !startVertexId && vertices.length > 0)}
+            disabled={isRunning || vertices.length === 0}
             style={{ width: '100%', padding: '10px 14px', fontSize: '0.88rem', fontWeight: 600 }}
           >
             <Play size={16} /> Run {currentAlgorithm?.name || 'Algorithm'}

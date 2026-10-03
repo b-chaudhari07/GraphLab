@@ -87,10 +87,14 @@ export function useExecutionState() {
     setConfig((prev) => ({ ...prev, animationSpeed: speedMs }));
   }, []);
 
-  const loadSteps = useCallback((newSteps: AlgorithmStep[]) => {
+  const loadSteps = useCallback((newSteps: AlgorithmStep[], autoPlay: boolean = true) => {
     setSteps(newSteps);
     setCurrentStepIndex(0);
-    setStatus('idle');
+    if (autoPlay && newSteps.length > 0) {
+      setStatus('running');
+    } else {
+      setStatus('idle');
+    }
   }, []);
 
   // Complete reset of execution state (used on Graph Clear / Reset)

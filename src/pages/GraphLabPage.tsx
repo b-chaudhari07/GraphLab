@@ -107,13 +107,9 @@ export const GraphLabPage: React.FC = () => {
     const generatedSteps = runAlgorithm(fullConfig, { vertices, edges, config });
 
     if (generatedSteps.length > 0) {
-      loadSteps(generatedSteps);
-      // Auto-start playback!
-      setTimeout(() => {
-        play();
-      }, 50);
+      loadSteps(generatedSteps, true);
     }
-  }, [executionConfig, hamiltonianMode, vertices, edges, config, loadSteps, play]);
+  }, [executionConfig, hamiltonianMode, vertices, edges, config, loadSteps]);
 
   const selectedAlgo = getAlgorithmById(executionConfig.selectedAlgorithmId);
 
