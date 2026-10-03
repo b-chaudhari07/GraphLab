@@ -1,43 +1,52 @@
 /**
- * Types for Algorithm Engine & Execution Architecture.
- * Designed strictly according to Discrete Mathematics (7MA206) Module V syllabus.
+ * Types for Syllabus-Confirmed Algorithm Engine & Execution Architecture.
+ * Course: Discrete Mathematics (7MA206) - Module V: Graph Theory & Trees
  */
 
 export type SyllabusAlgorithmId =
-  | 'bfs'
-  | 'dfs'
-  | 'kruskal'
-  | 'prim'
-  | 'euler'
+  | 'connectivity'
+  | 'eulerian'
   | 'hamiltonian'
-  | 'coloring'
-  | 'tree-traversal';
+  | 'isomorphism';
 
 export interface AlgorithmInfo {
   id: SyllabusAlgorithmId;
   name: string;
-  moduleSection: string; // "Module V — Graph and Trees"
+  moduleSection: string; // "Module V — Graph Theory & Trees"
   description: string;
   syllabusTopic: string;
   requiresStartVertex: boolean;
+  supportsDirected: boolean;
+  supportsWeighted: boolean;
   timeComplexity: string;
   spaceComplexity: string;
 }
+
+export type HamiltonianMode = 'path' | 'cycle';
 
 export interface AlgorithmConfig {
   selectedAlgorithmId: SyllabusAlgorithmId | null;
   startVertexId: string | null;
   animationSpeed: number; // Interval in ms (e.g. 1000ms)
+  hamiltonianMode?: HamiltonianMode;
 }
 
 export interface DataStructureSnapshot {
   queue?: string[];
   stack?: string[];
   visitedSet?: string[];
-  colorMap?: Record<string, string>; // VertexId -> Color Name/Hex
-  mstEdgeIds?: string[];
+  unreachableSet?: string[];
+  componentMap?: Record<string, number>;
+  traversalPath?: string[];
   vertexDegrees?: Record<string, number>;
-  traversalOrder?: string[];
+  isomorphismMapping?: Record<string, string>;
+  resultSummary?: string;
+  finalConclusion?: {
+    success: boolean;
+    title: string;
+    message: string;
+    details?: string[];
+  };
 }
 
 export interface AlgorithmStep {

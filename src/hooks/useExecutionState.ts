@@ -9,9 +9,10 @@ import type { Vertex } from '../types/graph';
 
 export function useExecutionState() {
   const [config, setConfig] = useState<AlgorithmConfig>({
-    selectedAlgorithmId: 'bfs',
+    selectedAlgorithmId: 'connectivity',
     startVertexId: null,
     animationSpeed: 1000,
+    hamiltonianMode: 'cycle',
   });
 
   const [status, setStatus] = useState<ExecutionStatus>('idle');

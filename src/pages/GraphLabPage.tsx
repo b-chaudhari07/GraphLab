@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import { useGraphState } from '../hooks/useGraphState';
 import { useExecutionState } from '../hooks/useExecutionState';
@@ -7,14 +7,19 @@ import { AboutModal } from '../components/layout/AboutModal';
 import { GraphControls } from '../components/controls/GraphControls';
 import { GraphCanvas } from '../components/graph/GraphCanvas';
 import { AlgorithmPanel } from '../components/algorithm/AlgorithmPanel';
+import { IsomorphismModal } from '../components/algorithm/IsomorphismModal';
 import { ExecutionControls } from '../components/algorithm/ExecutionControls';
 import { GraphInfoPanel } from '../components/panels/GraphInfoPanel';
 import { MathExplanationPanel } from '../components/panels/MathExplanationPanel';
 import { getAlgorithmById } from '../algorithms';
+import { runAlgorithm } from '../algorithms/runner';
+import type { HamiltonianMode } from '../types/algorithm';
 
 export const GraphLabPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const [isAboutOpen, setIsAboutOpen] = useState<boolean>(false);
+  const [isIsomorphismOpen, setIsIsomorphismOpen] = useState<boolean>(false);
+  const [hamiltonianMode, setHamiltonianMode] = useState<HamiltonianMode>('cycle');
 
   // Core Graph domain state & validation (Starts with clean empty canvas)
   const {
@@ -57,6 +62,7 @@ export const GraphLabPage: React.FC = () => {
     setAlgorithm,
     setStartVertex,
     setAnimationSpeed,
+    loadSteps,
     resetExecution,
     syncWithVertices,
   } = useExecutionState();
@@ -83,6 +89,31 @@ export const GraphLabPage: React.FC = () => {
     loadPreset(presetId);
     resetExecution();
   };
+
+  // Run Algorithm Handler: Generates steps & automatically starts playback!
+  const handleRunAlgorithm = useCallback(() => {
+    if (!executionConfig.selectedAlgorithmId) return;
+
+    if (executionConfig.selectedAlgorithmId === 'isomorphism') {
+      setIsIsomorphismOpen(true);
+      return;
+    }
+
+    const fullConfig = {
+      ...executionConfig,
+      hamiltonianMode,
+    };
+
+    const generatedSteps = runAlgorithm(fullConfig, { vertices, edges, config });
+
+    if (generatedSteps.length > 0) {
+      loadSteps(generatedSteps);
+      // Auto-start playback!
+      setTimeout(() => {
+        play();
+      }, 50);
+    }
+  }, [executionConfig, hamiltonianMode, vertices, edges, config, loadSteps, play]);
 
   const selectedAlgo = getAlgorithmById(executionConfig.selectedAlgorithmId);
 
@@ -183,13 +214,18 @@ export const GraphLabPage: React.FC = () => {
             gap: 12,
           }}
         >
-          <div style={{ flex: '0 0 auto', maxHeight: '45%' }}>
+          <div style={{ flex: '0 0 auto', maxHeight: '48%' }}>
             <AlgorithmPanel
               selectedAlgorithmId={executionConfig.selectedAlgorithmId}
               startVertexId={executionConfig.startVertexId}
               vertices={vertices}
+              hamiltonianMode={hamiltonianMode}
               onSelectAlgorithm={setAlgorithm}
               onSelectStartVertex={setStartVertex}
+              onSelectHamiltonianMode={setHamiltonianMode}
+              onRunAlgorithm={handleRunAlgorithm}
+              onOpenIsomorphismModal={() => setIsIsomorphismOpen(true)}
+              isRunning={status === 'running'}
             />
           </div>
 
@@ -234,6 +270,13 @@ export const GraphLabPage: React.FC = () => {
 
       {/* Educational Information Modal */}
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
+
+      {/* Dual Graph Isomorphism Comparison Modal */}
+      <IsomorphismModal
+        isOpen={isIsomorphismOpen}
+        onClose={() => setIsIsomorphismOpen(false)}
+        graphA={{ vertices, edges, config }}
+      />
     </div>
   );
 };
