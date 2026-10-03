@@ -5,6 +5,7 @@ import type {
   ExecutionStatus,
   SyllabusAlgorithmId,
 } from '../types/algorithm';
+import type { Vertex } from '../types/graph';
 
 export function useExecutionState() {
   const [config, setConfig] = useState<AlgorithmConfig>({
@@ -91,6 +92,27 @@ export function useExecutionState() {
     setStatus('idle');
   }, []);
 
+  // Complete reset of execution state (used on Graph Clear / Reset)
+  const resetExecution = useCallback(() => {
+    setStatus('idle');
+    setCurrentStepIndex(0);
+    setSteps([]);
+    setConfig((prev) => ({ ...prev, startVertexId: null }));
+  }, []);
+
+  // Synchronize execution config with current vertices list (invalidate deleted start vertex)
+  const syncWithVertices = useCallback((currentVertices: Vertex[]) => {
+    if (config.startVertexId) {
+      const exists = currentVertices.some((v) => v.id === config.startVertexId);
+      if (!exists) {
+        setConfig((prev) => ({ ...prev, startVertexId: null }));
+        setStatus('idle');
+        setCurrentStepIndex(0);
+        setSteps([]);
+      }
+    }
+  }, [config.startVertexId]);
+
   const currentStep = steps[currentStepIndex] || null;
 
   return {
@@ -109,5 +131,7 @@ export function useExecutionState() {
     setStartVertex,
     setAnimationSpeed,
     loadSteps,
+    resetExecution,
+    syncWithVertices,
   };
 }

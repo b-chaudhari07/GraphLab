@@ -1,22 +1,26 @@
 import React, { useState } from 'react';
-import type { GraphConfig, Vertex, Edge } from '../../types/graph';
+import type { GraphConfig, Vertex } from '../../types/graph';
 import { PRESET_GRAPHS } from '../../data/presetGraphs';
-import { Plus, Trash2, ArrowRightLeft, Hash, Layers, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, ArrowRightLeft, Hash, Layers, RefreshCw, Repeat } from 'lucide-react';
+import { validateVertexLabel, validateEdgeWeight } from '../../utils/validation';
 
 interface GraphControlsProps {
   config: GraphConfig;
   vertices: Vertex[];
-  edges?: Edge[];
   selectedVertexId: string | null;
   selectedEdgeId: string | null;
   onToggleDirected: (isDirected: boolean) => void;
   onToggleWeighted: (isWeighted: boolean) => void;
-  onAddVertex: (x: number, y: number, label?: string) => void;
+  onToggleSelfLoops: (allowSelfLoops: boolean) => void;
+  onAddVertex: (x: number, y: number, label?: string) => Vertex | null;
   onAddEdge: (sourceId: string, targetId: string, weight?: number) => void;
   onDeleteVertex: (id: string) => void;
   onDeleteEdge: (id: string) => void;
   onClearGraph: () => void;
+  onResetGraph: () => void;
   onLoadPreset: (presetId: string) => void;
+  validationError: string | null;
+  setValidationError: (msg: string | null) => void;
 }
 
 export const GraphControls: React.FC<GraphControlsProps> = ({
@@ -26,12 +30,16 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
   selectedEdgeId,
   onToggleDirected,
   onToggleWeighted,
+  onToggleSelfLoops,
   onAddVertex,
   onAddEdge,
   onDeleteVertex,
   onDeleteEdge,
   onClearGraph,
+  onResetGraph,
   onLoadPreset,
+  validationError,
+  setValidationError,
 }) => {
   // Form states for manual edge creation
   const [sourceVertexId, setSourceVertexId] = useState<string>('');
@@ -43,18 +51,44 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
 
   const handleManualAddVertex = (e: React.FormEvent) => {
     e.preventDefault();
-    // Default canvas center positioning for manually typed vertex
+    const label = vertexLabel.trim();
+    if (!label) {
+      setValidationError('Vertex label cannot be empty or blank.');
+      return;
+    }
+
+    const validation = validateVertexLabel(label, vertices);
+    if (!validation.isValid) {
+      setValidationError(validation.error || 'Invalid label.');
+      return;
+    }
+
+    // Default canvas placement
     const x = Math.floor(250 + Math.random() * 300);
     const y = Math.floor(150 + Math.random() * 200);
-    onAddVertex(x, y, vertexLabel.trim() || undefined);
-    setVertexLabel('');
+    const result = onAddVertex(x, y, label);
+    if (result) {
+      setVertexLabel('');
+    }
   };
 
   const handleManualAddEdge = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sourceVertexId || !targetVertexId) return;
+    if (!sourceVertexId || !targetVertexId) {
+      setValidationError('Both source and target vertices must be selected.');
+      return;
+    }
 
-    const weight = config.isWeighted ? parseFloat(edgeWeight) || 1 : undefined;
+    let weight: number | undefined = undefined;
+    if (config.isWeighted) {
+      const weightVal = validateEdgeWeight(edgeWeight);
+      if (!weightVal.isValid) {
+        setValidationError(weightVal.error || 'Invalid edge weight.');
+        return;
+      }
+      weight = parseFloat(edgeWeight);
+    }
+
     onAddEdge(sourceVertexId, targetVertexId, weight);
   };
 
@@ -69,12 +103,15 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
       <div className="panel-content">
         {/* Preset Selector */}
         <div className="input-group">
-          <label className="input-label">Load Preset Discrete Math Graph</label>
+          <label className="input-label">Load Preset Sample Graph</label>
           <select
             className="select-field"
-            onChange={(e) => onLoadPreset(e.target.value)}
-            defaultValue="binary-tree"
+            onChange={(e) => {
+              if (e.target.value) onLoadPreset(e.target.value);
+            }}
+            defaultValue=""
           >
+            <option value="" disabled>-- Select Preset --</option>
             {PRESET_GRAPHS.map((preset) => (
               <option key={preset.id} value={preset.id}>
                 {preset.name}
@@ -108,6 +145,18 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
               style={{ width: 16, height: 16, cursor: 'pointer' }}
             />
           </div>
+
+          <div className="toggle-switch">
+            <span className="toggle-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Repeat size={14} /> Allow Self-Loops
+            </span>
+            <input
+              type="checkbox"
+              checked={config.allowSelfLoops}
+              onChange={(e) => onToggleSelfLoops(e.target.checked)}
+              style={{ width: 16, height: 16, cursor: 'pointer' }}
+            />
+          </div>
         </div>
 
         {/* Add Vertex Form */}
@@ -119,7 +168,10 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
               className="input-field"
               placeholder={`Label (e.g. ${vertices.length + 1})`}
               value={vertexLabel}
-              onChange={(e) => setVertexLabel(e.target.value)}
+              onChange={(e) => {
+                setVertexLabel(e.target.value);
+                if (validationError) setValidationError(null);
+              }}
               style={{ flex: 1 }}
             />
             <button type="submit" className="btn btn-primary btn-sm">
@@ -136,7 +188,10 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
               <select
                 className="select-field"
                 value={sourceVertexId}
-                onChange={(e) => setSourceVertexId(e.target.value)}
+                onChange={(e) => {
+                  setSourceVertexId(e.target.value);
+                  if (validationError) setValidationError(null);
+                }}
                 style={{ flex: 1 }}
               >
                 <option value="">Source Node</option>
@@ -150,7 +205,10 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
               <select
                 className="select-field"
                 value={targetVertexId}
-                onChange={(e) => setTargetVertexId(e.target.value)}
+                onChange={(e) => {
+                  setTargetVertexId(e.target.value);
+                  if (validationError) setValidationError(null);
+                }}
                 style={{ flex: 1 }}
               >
                 <option value="">Target Node</option>
@@ -165,17 +223,21 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
             {config.isWeighted && (
               <input
                 type="number"
+                step="any"
                 className="input-field"
-                placeholder="Edge Weight"
+                placeholder="Edge Weight (e.g. 5)"
                 value={edgeWeight}
-                onChange={(e) => setEdgeWeight(e.target.value)}
+                onChange={(e) => {
+                  setEdgeWeight(e.target.value);
+                  if (validationError) setValidationError(null);
+                }}
               />
             )}
 
             <button
               type="submit"
               className="btn btn-outline btn-sm"
-              disabled={!sourceVertexId || !targetVertexId}
+              disabled={!sourceVertexId || !targetVertexId || vertices.length < 1}
             >
               <Plus size={14} /> Connect Edge
             </button>
@@ -212,10 +274,23 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
           </div>
         )}
 
-        {/* Clear Canvas Action */}
-        <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
-          <button className="btn btn-outline btn-sm" style={{ width: '100%' }} onClick={onClearGraph}>
-            <RefreshCw size={14} /> Clear Canvas
+        {/* Clear Canvas & Reset Actions */}
+        <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border-color)', display: 'flex', gap: 6 }}>
+          <button
+            className="btn btn-outline btn-sm"
+            style={{ flex: 1 }}
+            onClick={onClearGraph}
+            title="Remove all vertices and edges"
+          >
+            <Trash2 size={13} /> Clear Canvas
+          </button>
+          <button
+            className="btn btn-outline btn-sm"
+            style={{ flex: 1 }}
+            onClick={onResetGraph}
+            title="Reset to clean initial state"
+          >
+            <RefreshCw size={13} /> Reset Graph
           </button>
         </div>
       </div>

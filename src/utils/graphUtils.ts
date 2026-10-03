@@ -1,11 +1,14 @@
 /**
  * Graph mathematical property calculators according to Discrete Mathematics (7MA206).
+ * Module V: Graph and Trees.
  */
 
 import type { Vertex, Edge, GraphConfig, GraphMetrics, VertexDegree, AdjacencyMatrix, AdjacencyList } from '../types/graph';
 
 /**
- * Calculates vertex degree distributions for undirected/directed graphs.
+ * Calculates vertex degree distributions for undirected and directed graphs.
+ * - Undirected graph: Handshaking Lemma \sum deg(v) = 2|E|. Self-loop adds 2 to deg(v).
+ * - Directed graph: in-degree, out-degree, and total degree = in-degree + out-degree. Self-loop adds 1 to in-degree & 1 to out-degree.
  */
 export function calculateVertexDegrees(
   vertices: Vertex[],
@@ -25,25 +28,44 @@ export function calculateVertexDegrees(
   });
 
   edges.forEach((edge) => {
-    if (degrees[edge.source]) {
-      degrees[edge.source].outDegree += 1;
-      if (!isDirected) {
-        degrees[edge.source].inDegree += 1;
-      }
-    }
+    const isSelfLoop = edge.source === edge.target;
 
-    if (degrees[edge.target]) {
-      degrees[edge.target].inDegree += 1;
-      if (!isDirected) {
-        degrees[edge.target].outDegree += 1;
+    if (isDirected) {
+      // Directed graph degree counting
+      if (degrees[edge.source]) {
+        degrees[edge.source].outDegree += 1;
+      }
+      if (degrees[edge.target]) {
+        degrees[edge.target].inDegree += 1;
+      }
+    } else {
+      // Undirected graph degree counting
+      if (isSelfLoop) {
+        if (degrees[edge.source]) {
+          // Self-loop contributes +2 to total degree of an undirected vertex
+          degrees[edge.source].totalDegree += 2;
+          degrees[edge.source].inDegree += 1;
+          degrees[edge.source].outDegree += 1;
+        }
+      } else {
+        if (degrees[edge.source]) {
+          degrees[edge.source].totalDegree += 1;
+          degrees[edge.source].outDegree += 1;
+        }
+        if (degrees[edge.target]) {
+          degrees[edge.target].totalDegree += 1;
+          degrees[edge.target].inDegree += 1;
+        }
       }
     }
   });
 
-  // Calculate total degrees
+  // Calculate total degrees for directed graph
   vertices.forEach((v) => {
     const deg = degrees[v.id];
-    deg.totalDegree = isDirected ? deg.inDegree + deg.outDegree : deg.outDegree;
+    if (isDirected) {
+      deg.totalDegree = deg.inDegree + deg.outDegree;
+    }
   });
 
   return degrees;
@@ -51,6 +73,10 @@ export function calculateVertexDegrees(
 
 /**
  * Generates Adjacency Matrix representation.
+ * - Matrix dimension: |V| x |V|
+ * - Rows and columns indexed by current vertices
+ * - Entry (i, j) represents edge from vertex i to vertex j (weight or 1)
+ * - Symmetric for undirected graphs
  */
 export function calculateAdjacencyMatrix(
   vertices: Vertex[],
@@ -88,6 +114,9 @@ export function calculateAdjacencyMatrix(
 
 /**
  * Generates Adjacency List representation.
+ * - Preserves directionality for directed graphs
+ * - Preserves edge weights if graph is weighted
+ * - Keys correspond to vertex labels
  */
 export function calculateAdjacencyList(
   vertices: Vertex[],
@@ -108,6 +137,7 @@ export function calculateAdjacencyList(
   edges.forEach((edge) => {
     const src = vertexMap[edge.source];
     const tgt = vertexMap[edge.target];
+    const isSelfLoop = edge.source === edge.target;
 
     if (src && tgt) {
       adjList[src.label].push({
@@ -116,7 +146,7 @@ export function calculateAdjacencyList(
         weight: config.isWeighted ? edge.weight : undefined,
       });
 
-      if (!config.isDirected) {
+      if (!config.isDirected && !isSelfLoop) {
         adjList[tgt.label].push({
           targetId: src.id,
           targetLabel: src.label,
@@ -130,7 +160,7 @@ export function calculateAdjacencyList(
 }
 
 /**
- * Computes graph metrics summary.
+ * Computes live graph metrics summary.
  */
 export function computeGraphMetrics(
   vertices: Vertex[],
@@ -153,7 +183,7 @@ export function computeGraphMetrics(
     degrees,
     adjacencyMatrix,
     adjacencyList,
-    isConnected: n > 0, // Basic indicator for UI
+    isConnected: n > 0,
     isTree,
   };
 }

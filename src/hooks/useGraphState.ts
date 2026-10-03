@@ -3,16 +3,20 @@ import type { Vertex, Edge, GraphConfig } from '../types/graph';
 import type { CanvasMode, SelectionState } from '../types/visualization';
 import { computeGraphMetrics } from '../utils/graphUtils';
 import { PRESET_GRAPHS } from '../data/presetGraphs';
+import {
+  validateVertexLabel,
+  validateEdgeConnection,
+} from '../utils/validation';
 
-export function useGraphState(initialPresetId: string = 'binary-tree') {
-  const initialData = useMemo(() => {
-    const preset = PRESET_GRAPHS.find((p) => p.id === initialPresetId) || PRESET_GRAPHS[0];
-    return preset.data;
-  }, [initialPresetId]);
-
-  const [vertices, setVertices] = useState<Vertex[]>(initialData.vertices);
-  const [edges, setEdges] = useState<Edge[]>(initialData.edges);
-  const [config, setConfig] = useState<GraphConfig>(initialData.config);
+export function useGraphState() {
+  // Initial clean state: Empty graph with default configuration
+  const [vertices, setVertices] = useState<Vertex[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const [config, setConfig] = useState<GraphConfig>({
+    isDirected: false,
+    isWeighted: false,
+    allowSelfLoops: false,
+  });
 
   const [canvasMode, setCanvasMode] = useState<CanvasMode>('select');
   const [selection, setSelection] = useState<SelectionState>({
@@ -21,23 +25,42 @@ export function useGraphState(initialPresetId: string = 'binary-tree') {
     edgeSourceVertexId: null,
   });
 
-  // Calculate next default label (1, 2, 3... or A, B, C...)
-  const getNextVertexLabel = useCallback(() => {
-    const count = vertices.length + 1;
-    return `${count}`;
-  }, [vertices.length]);
+  // User-facing validation feedback message state
+  const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Add Vertex
+  const clearValidationError = useCallback(() => {
+    setValidationError(null);
+  }, []);
+
+  // Calculate next auto-generated unique label (e.g., "1", "2", "3" avoiding duplicates)
+  const getNextVertexLabel = useCallback(() => {
+    let candidateNumber = vertices.length + 1;
+    while (vertices.some((v) => v.label === `${candidateNumber}`)) {
+      candidateNumber += 1;
+    }
+    return `${candidateNumber}`;
+  }, [vertices]);
+
+  // Add Vertex with validation
   const addVertex = useCallback(
-    (x: number, y: number, customLabel?: string) => {
+    (x: number, y: number, customLabel?: string): Vertex | null => {
+      const label = customLabel ? customLabel.trim() : getNextVertexLabel();
+
+      // Validate label
+      const validation = validateVertexLabel(label, vertices);
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Invalid vertex label.');
+        return null;
+      }
+
+      setValidationError(null);
       const id = `v_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-      const label = customLabel || getNextVertexLabel();
       const newVertex: Vertex = { id, label, x, y };
 
       setVertices((prev) => [...prev, newVertex]);
       return newVertex;
     },
-    [getNextVertexLabel]
+    [vertices, getNextVertexLabel]
   );
 
   // Move Vertex
@@ -45,22 +68,25 @@ export function useGraphState(initialPresetId: string = 'binary-tree') {
     setVertices((prev) => prev.map((v) => (v.id === id ? { ...v, x, y } : v)));
   }, []);
 
-  // Add Edge
+  // Add Edge with validation
   const addEdge = useCallback(
-    (sourceId: string, targetId: string, weight?: number) => {
-      if (!config.allowSelfLoops && sourceId === targetId) {
+    (sourceId: string, targetId: string, weight?: number): Edge | null => {
+      // Validate edge connection using validation utility
+      const validation = validateEdgeConnection(
+        sourceId,
+        targetId,
+        weight,
+        vertices,
+        edges,
+        config
+      );
+
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Invalid edge configuration.');
         return null;
       }
 
-      // Check duplicate edge
-      const exists = edges.some(
-        (e) =>
-          (e.source === sourceId && e.target === targetId) ||
-          (!config.isDirected && e.source === targetId && e.target === sourceId)
-      );
-
-      if (exists) return null;
-
+      setValidationError(null);
       const edgeId = `e_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
       const newEdge: Edge = {
         id: edgeId,
@@ -73,11 +99,12 @@ export function useGraphState(initialPresetId: string = 'binary-tree') {
       setEdges((prev) => [...prev, newEdge]);
       return newEdge;
     },
-    [config, edges]
+    [config, edges, vertices]
   );
 
-  // Delete Vertex and associated edges
+  // Delete Vertex and cascade delete incident edges
   const deleteVertex = useCallback((id: string) => {
+    setValidationError(null);
     setVertices((prev) => prev.filter((v) => v.id !== id));
     setEdges((prev) => prev.filter((e) => e.source !== id && e.target !== id));
     setSelection((prev) => ({
@@ -89,6 +116,7 @@ export function useGraphState(initialPresetId: string = 'binary-tree') {
 
   // Delete Edge
   const deleteEdge = useCallback((id: string) => {
+    setValidationError(null);
     setEdges((prev) => prev.filter((e) => e.id !== id));
     setSelection((prev) => ({
       ...prev,
@@ -96,15 +124,31 @@ export function useGraphState(initialPresetId: string = 'binary-tree') {
     }));
   }, []);
 
-  // Clear All
+  // Clear Canvas (removes all vertices & edges, preserves current config settings)
   const clearGraph = useCallback(() => {
+    setValidationError(null);
     setVertices([]);
     setEdges([]);
     setSelection({ selectedVertexId: null, selectedEdgeId: null, edgeSourceVertexId: null });
   }, []);
 
-  // Load Preset
+  // Reset Graph (returns to clean initial state: 0 vertices, 0 edges, default config)
+  const resetGraph = useCallback(() => {
+    setValidationError(null);
+    setVertices([]);
+    setEdges([]);
+    setConfig({
+      isDirected: false,
+      isWeighted: false,
+      allowSelfLoops: false,
+    });
+    setCanvasMode('select');
+    setSelection({ selectedVertexId: null, selectedEdgeId: null, edgeSourceVertexId: null });
+  }, []);
+
+  // Load Preset (the ONLY mechanism for loading Binary Tree, K4, Cycle C5, Weighted Digraph)
   const loadPreset = useCallback((presetId: string) => {
+    setValidationError(null);
     const preset = PRESET_GRAPHS.find((p) => p.id === presetId);
     if (preset) {
       setVertices(preset.data.vertices);
@@ -114,14 +158,16 @@ export function useGraphState(initialPresetId: string = 'binary-tree') {
     }
   }, []);
 
-  // Toggle Directed
+  // Toggle Directed / Undirected
   const toggleDirected = useCallback((isDirected: boolean) => {
+    setValidationError(null);
     setConfig((prev) => ({ ...prev, isDirected }));
     setEdges((prev) => prev.map((e) => ({ ...e, isDirected })));
   }, []);
 
-  // Toggle Weighted
+  // Toggle Weighted / Unweighted
   const toggleWeighted = useCallback((isWeighted: boolean) => {
+    setValidationError(null);
     setConfig((prev) => ({ ...prev, isWeighted }));
     setEdges((prev) =>
       prev.map((e) => ({
@@ -131,7 +177,16 @@ export function useGraphState(initialPresetId: string = 'binary-tree') {
     );
   }, []);
 
-  // Compute graph metrics dynamically
+  // Toggle Allow Self-Loops
+  const toggleSelfLoops = useCallback((allowSelfLoops: boolean) => {
+    setValidationError(null);
+    setConfig((prev) => ({ ...prev, allowSelfLoops }));
+    if (!allowSelfLoops) {
+      setEdges((prev) => prev.filter((e) => e.source !== e.target));
+    }
+  }, []);
+
+  // Compute graph metrics dynamically from canonical state
   const metrics = useMemo(() => {
     return computeGraphMetrics(vertices, edges, config);
   }, [vertices, edges, config]);
@@ -144,15 +199,20 @@ export function useGraphState(initialPresetId: string = 'binary-tree') {
     setCanvasMode,
     selection,
     setSelection,
+    validationError,
+    setValidationError,
+    clearValidationError,
     addVertex,
     moveVertex,
     addEdge,
     deleteVertex,
     deleteEdge,
     clearGraph,
+    resetGraph,
     loadPreset,
     toggleDirected,
     toggleWeighted,
+    toggleSelfLoops,
     metrics,
   };
 }

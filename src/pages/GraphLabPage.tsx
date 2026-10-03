@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import { useGraphState } from '../hooks/useGraphState';
 import { useExecutionState } from '../hooks/useExecutionState';
@@ -16,7 +16,7 @@ export const GraphLabPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const [isAboutOpen, setIsAboutOpen] = useState<boolean>(false);
 
-  // Core Graph domain state
+  // Core Graph domain state & validation (Starts with clean empty canvas)
   const {
     vertices,
     edges,
@@ -25,17 +25,22 @@ export const GraphLabPage: React.FC = () => {
     setCanvasMode,
     selection,
     setSelection,
+    validationError,
+    setValidationError,
+    clearValidationError,
     addVertex,
     moveVertex,
     addEdge,
     deleteVertex,
     deleteEdge,
     clearGraph,
+    resetGraph,
     loadPreset,
     toggleDirected,
     toggleWeighted,
+    toggleSelfLoops,
     metrics,
-  } = useGraphState('binary-tree');
+  } = useGraphState();
 
   // Execution engine state
   const {
@@ -52,7 +57,32 @@ export const GraphLabPage: React.FC = () => {
     setAlgorithm,
     setStartVertex,
     setAnimationSpeed,
+    resetExecution,
+    syncWithVertices,
   } = useExecutionState();
+
+  // Safety check: Invalidate deleted start vertex automatically when vertices change
+  useEffect(() => {
+    syncWithVertices(vertices);
+  }, [vertices, syncWithVertices]);
+
+  // Combined clear graph & reset execution state
+  const handleClearGraph = () => {
+    clearGraph();
+    resetExecution();
+  };
+
+  // Combined reset graph & reset execution state (returns to clean initial state)
+  const handleResetGraph = () => {
+    resetGraph();
+    resetExecution();
+  };
+
+  // Preset load replaces current graph cleanly
+  const handleLoadPreset = (presetId: string) => {
+    loadPreset(presetId);
+    resetExecution();
+  };
 
   const selectedAlgo = getAlgorithmById(executionConfig.selectedAlgorithmId);
 
@@ -71,7 +101,7 @@ export const GraphLabPage: React.FC = () => {
       <Header
         theme={theme}
         toggleTheme={toggleTheme}
-        onReset={clearGraph}
+        onReset={handleResetGraph}
         onOpenAbout={() => setIsAboutOpen(true)}
       />
 
@@ -86,22 +116,25 @@ export const GraphLabPage: React.FC = () => {
           gap: 12,
         }}
       >
-        {/* Left Sidebar: Graph Builder */}
+        {/* Left Sidebar: Graph Builder & Validation */}
         <div style={{ width: 300, flexShrink: 0, height: '100%' }}>
           <GraphControls
             config={config}
             vertices={vertices}
-            edges={edges}
             selectedVertexId={selection.selectedVertexId}
             selectedEdgeId={selection.selectedEdgeId}
             onToggleDirected={toggleDirected}
             onToggleWeighted={toggleWeighted}
+            onToggleSelfLoops={toggleSelfLoops}
             onAddVertex={addVertex}
             onAddEdge={addEdge}
             onDeleteVertex={deleteVertex}
             onDeleteEdge={deleteEdge}
-            onClearGraph={clearGraph}
-            onLoadPreset={loadPreset}
+            onClearGraph={handleClearGraph}
+            onResetGraph={handleResetGraph}
+            onLoadPreset={handleLoadPreset}
+            validationError={validationError}
+            setValidationError={setValidationError}
           />
         </div>
 
@@ -132,7 +165,10 @@ export const GraphLabPage: React.FC = () => {
             activeVertexId={currentStep?.activeVertexId}
             visitedVertexIds={currentStep?.visitedVertexIds}
             highlightEdgeIds={currentStep?.highlightEdgeIds}
-            onLoadPreset={loadPreset}
+            onLoadPreset={handleLoadPreset}
+            validationError={validationError}
+            clearValidationError={clearValidationError}
+            setValidationError={setValidationError}
           />
         </div>
 

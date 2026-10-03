@@ -1,9 +1,10 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useMemo } from 'react';
 import type { Vertex, Edge, GraphConfig } from '../../types/graph';
 import type { CanvasMode, SelectionState } from '../../types/visualization';
 import { SvgVertex } from './SvgVertex';
 import { SvgEdge } from './SvgEdge';
-import { MousePointer, PlusCircle, Share2, Trash2, RotateCcw } from 'lucide-react';
+import { MousePointer, PlusCircle, Share2, Trash2, RotateCcw, AlertTriangle, X } from 'lucide-react';
+import { validateEdgeWeight } from '../../utils/validation';
 
 interface GraphCanvasProps {
   vertices: Vertex[];
@@ -13,7 +14,7 @@ interface GraphCanvasProps {
   setCanvasMode: (mode: CanvasMode) => void;
   selection: SelectionState;
   setSelection: React.Dispatch<React.SetStateAction<SelectionState>>;
-  addVertex: (x: number, y: number) => Vertex;
+  addVertex: (x: number, y: number, label?: string) => Vertex | null;
   moveVertex: (id: string, x: number, y: number) => void;
   addEdge: (sourceId: string, targetId: string, weight?: number) => Edge | null;
   deleteVertex: (id: string) => void;
@@ -23,6 +24,9 @@ interface GraphCanvasProps {
   visitedVertexIds?: string[];
   highlightEdgeIds?: string[];
   onLoadPreset?: (presetId: string) => void;
+  validationError?: string | null;
+  clearValidationError?: () => void;
+  setValidationError?: (msg: string | null) => void;
 }
 
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
@@ -43,6 +47,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   visitedVertexIds = [],
   highlightEdgeIds = [],
   onLoadPreset,
+  validationError,
+  clearValidationError,
+  setValidationError,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [draggingVertexId, setDraggingVertexId] = useState<string | null>(null);
@@ -103,10 +110,20 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
         let weight: number | undefined = undefined;
         if (config.isWeighted) {
-          const input = prompt(`Enter edge weight from node ${vertices.find(v=>v.id===sourceId)?.label} to node ${vertex.label}:`, '1');
+          const sourceNode = vertices.find((v) => v.id === sourceId);
+          const input = prompt(
+            `Enter edge weight from Node ${sourceNode?.label} to Node ${vertex.label}:`,
+            '1'
+          );
+
           if (input !== null) {
-            const parsed = parseFloat(input);
-            weight = isNaN(parsed) ? 1 : parsed;
+            const weightVal = validateEdgeWeight(input);
+            if (!weightVal.isValid) {
+              if (setValidationError) setValidationError(weightVal.error || 'Invalid weight.');
+              setSelection((prev) => ({ ...prev, edgeSourceVertexId: null }));
+              return;
+            }
+            weight = Number(input);
           } else {
             setSelection((prev) => ({ ...prev, edgeSourceVertexId: null }));
             return;
@@ -144,11 +161,18 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     }
   };
 
-  const vertexMap = React.useMemo(() => {
+  const vertexMap = useMemo(() => {
     const map = new Map<string, Vertex>();
     vertices.forEach((v) => map.set(v.id, v));
     return map;
   }, [vertices]);
+
+  // Set of edge keys to detect dual directed edges (e.g. A->B and B->A)
+  const edgeSet = useMemo(() => {
+    const set = new Set<string>();
+    edges.forEach((e) => set.add(`${e.source}->${e.target}`));
+    return set;
+  }, [edges]);
 
   const sourceVertexForPendingEdge = selection.edgeSourceVertexId
     ? vertexMap.get(selection.edgeSourceVertexId)
@@ -223,16 +247,72 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
             top: 16,
             right: 16,
             zIndex: 10,
-            padding: '6px 12px',
+            padding: '6px 14px',
             backgroundColor: 'var(--accent-amber)',
             color: '#000',
-            fontWeight: 600,
+            fontWeight: 700,
             borderRadius: 6,
-            fontSize: '0.8rem',
+            fontSize: '0.82rem',
             boxShadow: 'var(--shadow-md)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
           }}
         >
-          Connecting from Vertex {sourceVertexForPendingEdge.label} — Click target node to finish!
+          <span>Connecting from Vertex {sourceVertexForPendingEdge.label} — Click target node to finish!</span>
+          <button
+            className="btn btn-sm"
+            onClick={() => setSelection((prev) => ({ ...prev, edgeSourceVertexId: null }))}
+            style={{ padding: '2px 6px', fontSize: '0.7rem', background: 'rgba(0,0,0,0.15)', border: 'none', cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Validation Feedback Banner */}
+      {validationError && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 64,
+            left: 16,
+            right: 16,
+            zIndex: 15,
+            padding: '10px 14px',
+            backgroundColor: 'rgba(244, 63, 94, 0.92)',
+            color: '#ffffff',
+            borderRadius: 8,
+            fontSize: '0.84rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: 'var(--shadow-lg)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertTriangle size={18} />
+            <span>{validationError}</span>
+          </div>
+          {clearValidationError && (
+            <button
+              onClick={clearValidationError}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                cursor: 'pointer',
+                padding: 2,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              title="Dismiss"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       )}
 
@@ -290,22 +370,25 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
         {/* Empty Canvas State */}
         {vertices.length === 0 && (
-          <g transform="translate(400, 260)">
+          <g transform="translate(400, 240)">
+            <circle r="36" fill="var(--bg-secondary)" stroke="var(--border-color)" strokeWidth="1.5" />
+            <text textAnchor="middle" y="6" fill="var(--text-muted)" fontSize="20">∅</text>
             <text
+              y="60"
               textAnchor="middle"
-              fill="var(--text-muted)"
-              fontSize="18"
+              fill="var(--text-primary)"
+              fontSize="16"
               fontWeight="600"
             >
-              No graph created yet
+              No vertices yet
             </text>
             <text
-              y="28"
+              y="82"
               textAnchor="middle"
               fill="var(--text-secondary)"
               fontSize="13"
             >
-              Click "Add Vertex" or load a sample Discrete Mathematics graph below.
+              Click "Add Vertex" or load a sample graph below to start building.
             </text>
           </g>
         )}
@@ -316,12 +399,15 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           const tgt = vertexMap.get(edge.target);
           if (!src || !tgt) return null;
 
+          const isDual = config.isDirected && edgeSet.has(`${edge.target}->${edge.source}`);
+
           return (
             <SvgEdge
               key={edge.id}
               edge={edge}
               sourceVertex={src}
               targetVertex={tgt}
+              isDualEdge={isDual}
               isSelected={selection.selectedEdgeId === edge.id}
               isVisited={false}
               isActive={highlightEdgeIds.includes(edge.id)}
@@ -361,7 +447,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
             className="btn btn-primary btn-sm"
             onClick={() => onLoadPreset('binary-tree')}
           >
-            <RotateCcw size={14} /> Load Binary Tree
+            <RotateCcw size={14} /> Load Binary Tree Preset
           </button>
           <button
             className="btn btn-outline btn-sm"

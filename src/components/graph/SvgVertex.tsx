@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Vertex } from '../../types/graph';
+import type { VisualNodeState } from '../../types/visualization';
 import { VERTEX_RADIUS } from '../../utils/geometry';
 
 interface SvgVertexProps {
@@ -8,6 +9,7 @@ interface SvgVertexProps {
   isStartNode?: boolean;
   isVisited?: boolean;
   isActive?: boolean;
+  visualState?: VisualNodeState;
   customColor?: string;
   onMouseDown: (e: React.MouseEvent, vertex: Vertex) => void;
   onClick: (e: React.MouseEvent, vertex: Vertex) => void;
@@ -19,27 +21,41 @@ export const SvgVertex: React.FC<SvgVertexProps> = ({
   isStartNode,
   isVisited,
   isActive,
+  visualState = 'normal',
   customColor,
   onMouseDown,
   onClick,
 }) => {
-  // Determine fill & stroke classes based on state
+  // Determine effective visual state
+  const effectiveState: VisualNodeState = isSelected
+    ? 'selected'
+    : isStartNode
+    ? 'start'
+    : isActive
+    ? 'active'
+    : isVisited
+    ? 'visited'
+    : visualState;
+
   let bgFill = 'var(--vertex-default-bg)';
   let strokeColor = 'var(--vertex-default-stroke)';
   let textColor = 'var(--vertex-default-text)';
 
-  if (isSelected) {
+  if (effectiveState === 'selected') {
     bgFill = 'var(--vertex-selected-bg)';
     strokeColor = 'var(--vertex-selected-stroke)';
-  } else if (isStartNode) {
+  } else if (effectiveState === 'start') {
     bgFill = 'var(--vertex-start-bg)';
     strokeColor = 'var(--vertex-start-stroke)';
-  } else if (isActive) {
+  } else if (effectiveState === 'active') {
     bgFill = 'var(--vertex-active-bg)';
     strokeColor = 'var(--vertex-active-stroke)';
-  } else if (isVisited) {
+  } else if (effectiveState === 'visited') {
     bgFill = 'var(--vertex-visited-bg)';
     strokeColor = 'var(--vertex-visited-stroke)';
+  } else if (effectiveState === 'highlighted') {
+    bgFill = 'rgba(59, 130, 246, 0.25)';
+    strokeColor = 'var(--accent-cyan)';
   }
 
   if (customColor) {
@@ -56,7 +72,7 @@ export const SvgVertex: React.FC<SvgVertexProps> = ({
       className="vertex-group"
     >
       {/* Active state pulse glow ring */}
-      {isActive && (
+      {effectiveState === 'active' && (
         <circle
           r={VERTEX_RADIUS + 8}
           fill="none"
@@ -80,7 +96,7 @@ export const SvgVertex: React.FC<SvgVertexProps> = ({
       )}
 
       {/* Outer Selection Ring */}
-      {isSelected && (
+      {effectiveState === 'selected' && (
         <circle
           r={VERTEX_RADIUS + 5}
           fill="none"
@@ -95,7 +111,7 @@ export const SvgVertex: React.FC<SvgVertexProps> = ({
         r={VERTEX_RADIUS}
         fill={bgFill}
         stroke={strokeColor}
-        strokeWidth={isSelected || isActive ? 3 : 2}
+        strokeWidth={effectiveState === 'selected' || effectiveState === 'active' ? 3 : 2}
         style={{ transition: 'all 0.2s ease' }}
       />
 
@@ -112,7 +128,7 @@ export const SvgVertex: React.FC<SvgVertexProps> = ({
       </text>
 
       {/* Start Node Badge */}
-      {isStartNode && (
+      {effectiveState === 'start' && (
         <text
           x="0"
           y={-VERTEX_RADIUS - 8}

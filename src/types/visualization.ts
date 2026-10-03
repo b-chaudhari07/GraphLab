@@ -16,3 +16,22 @@ export interface NodePosition {
 }
 
 export type ThemeMode = 'dark' | 'light';
+
+/**
+ * Modular Visual States for Graph Nodes and Edges.
+ * Ready for step-by-step algorithm animation states in Phase 4.
+ */
+export type VisualNodeState =
+  | 'normal'
+  | 'selected'
+  | 'start'
+  | 'active'
+  | 'visited'
+  | 'highlighted';
+
+export type VisualEdgeState =
+  | 'normal'
+  | 'selected'
+  | 'visited'
+  | 'active'
+  | 'highlighted';

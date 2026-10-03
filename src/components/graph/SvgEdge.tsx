@@ -1,11 +1,12 @@
 import React from 'react';
 import type { Edge, Vertex } from '../../types/graph';
-import { getAdjustedEdgeEndpoints, getSelfLoopPath } from '../../utils/geometry';
+import { getAdjustedEdgeEndpoints, getCurvedEdgePath, getSelfLoopPath } from '../../utils/geometry';
 
 interface SvgEdgeProps {
   edge: Edge;
   sourceVertex: Vertex;
   targetVertex: Vertex;
+  isDualEdge?: boolean; // True if reverse edge B -> A also exists in directed graph
   isSelected?: boolean;
   isVisited?: boolean;
   isActive?: boolean;
@@ -16,6 +17,7 @@ export const SvgEdge: React.FC<SvgEdgeProps> = ({
   edge,
   sourceVertex,
   targetVertex,
+  isDualEdge,
   isSelected,
   isVisited,
   isActive,
@@ -37,6 +39,7 @@ export const SvgEdge: React.FC<SvgEdgeProps> = ({
     strokeWidth = 3;
   }
 
+  // Case 1: Self-loop
   if (isSelfLoop) {
     const { path, labelPos } = getSelfLoopPath({ x: sourceVertex.x, y: sourceVertex.y });
     return (
@@ -51,10 +54,10 @@ export const SvgEdge: React.FC<SvgEdgeProps> = ({
         {edge.weight !== undefined && (
           <g transform={`translate(${labelPos.x}, ${labelPos.y})`}>
             <rect
-              x="-12"
+              x="-14"
               y="-10"
-              width="24"
-              height="18"
+              width="28"
+              height="20"
               rx="4"
               fill="var(--bg-secondary)"
               stroke={strokeColor}
@@ -75,6 +78,68 @@ export const SvgEdge: React.FC<SvgEdgeProps> = ({
     );
   }
 
+  // Case 2: Dual directed edge (A -> B and B -> A both exist) -> Render curved Bezier arc
+  if (edge.isDirected && isDualEdge) {
+    const { path, labelPos } = getCurvedEdgePath(
+      { x: sourceVertex.x, y: sourceVertex.y },
+      { x: targetVertex.x, y: targetVertex.y }
+    );
+
+    return (
+      <g onClick={(e) => onClick(e, edge)} style={{ cursor: 'pointer' }}>
+        <path
+          d={path}
+          fill="none"
+          stroke="transparent"
+          strokeWidth="16"
+        />
+        <path
+          d={path}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          strokeDasharray={isActive ? '6 4' : undefined}
+          markerEnd={`url(#arrowhead${isSelected ? '-selected' : isActive ? '-active' : ''})`}
+          style={{ transition: 'stroke 0.2s ease, stroke-width 0.2s ease' }}
+        >
+          {isActive && (
+            <animate
+              attributeName="stroke-dashoffset"
+              values="20;0"
+              dur="0.8s"
+              repeatCount="indefinite"
+            />
+          )}
+        </path>
+
+        {edge.weight !== undefined && (
+          <g transform={`translate(${labelPos.x}, ${labelPos.y})`}>
+            <rect
+              x="-14"
+              y="-10"
+              width="28"
+              height="20"
+              rx="4"
+              fill="var(--bg-secondary)"
+              stroke={strokeColor}
+              strokeWidth="1"
+            />
+            <text
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="var(--text-primary)"
+              fontSize="11"
+              fontWeight="600"
+            >
+              {edge.weight}
+            </text>
+          </g>
+        )}
+      </g>
+    );
+  }
+
+  // Case 3: Standard straight line edge
   const { start, end, mid } = getAdjustedEdgeEndpoints(
     { x: sourceVertex.x, y: sourceVertex.y },
     { x: targetVertex.x, y: targetVertex.y }

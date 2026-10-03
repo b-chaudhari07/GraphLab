@@ -2,7 +2,7 @@ import React from 'react';
 import type { SyllabusAlgorithmId } from '../../types/algorithm';
 import type { Vertex } from '../../types/graph';
 import { SYLLABUS_ALGORITHMS, getAlgorithmById } from '../../algorithms';
-import { Cpu, Clock, HardDrive, CheckCircle2 } from 'lucide-react';
+import { Cpu, Clock, HardDrive, AlertCircle } from 'lucide-react';
 
 interface AlgorithmPanelProps {
   selectedAlgorithmId: SyllabusAlgorithmId | null;
@@ -108,10 +108,10 @@ export const AlgorithmPanel: React.FC<AlgorithmPanelProps> = ({
             <div
               style={{
                 marginTop: 4,
-                padding: '4px 8px',
+                padding: '6px 8px',
                 borderRadius: 4,
-                backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                color: 'var(--accent-emerald)',
+                backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                color: 'var(--text-highlight)',
                 fontSize: '0.72rem',
                 fontWeight: 600,
                 display: 'flex',
@@ -119,7 +119,7 @@ export const AlgorithmPanel: React.FC<AlgorithmPanelProps> = ({
                 gap: 6,
               }}
             >
-              <CheckCircle2 size={12} /> Phase 1 Architecture Registered
+              <AlertCircle size={12} /> Phase 3 Visualization Ready • Algorithm Execution in Phase 4
             </div>
           </div>
         )}
