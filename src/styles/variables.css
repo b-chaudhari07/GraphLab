@@ -1,0 +1,107 @@
+/* Design Tokens & Theme Variables for GraphLab */
+:root {
+  /* Color Palette - Dark Theme (Default) */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-card: rgba(30, 41, 59, 0.75);
+  --bg-hover: #475569;
+  
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-active: #3b82f6;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-highlight: #38bdf8;
+
+  /* Accent Colors */
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-indigo: #6366f1;
+  --accent-purple: #a855f7;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+
+  /* Node Visual States */
+  --vertex-default-bg: #1e293b;
+  --vertex-default-stroke: #64748b;
+  --vertex-default-text: #f8fafc;
+
+  --vertex-selected-bg: #1e3a8a;
+  --vertex-selected-stroke: #3b82f6;
+  
+  --vertex-start-bg: #064e3b;
+  --vertex-start-stroke: #10b981;
+
+  --vertex-visited-bg: #4c1d95;
+  --vertex-visited-stroke: #a855f7;
+
+  --vertex-active-bg: #78350f;
+  --vertex-active-stroke: #f59e0b;
+
+  /* Edge Visual States */
+  --edge-default: #475569;
+  --edge-selected: #3b82f6;
+  --edge-visited: #a855f7;
+  --edge-active: #f59e0b;
+
+  /* Canvas Grid */
+  --grid-dot: rgba(255, 255, 255, 0.08);
+
+  /* Shadows & Glassmorphism */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --backdrop-blur: blur(12px);
+
+  /* Dimensions */
+  --header-height: 64px;
+  --panel-radius: 12px;
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-hover: #e2e8f0;
+  
+  --border-color: rgba(0, 0, 0, 0.1);
+  --border-active: #2563eb;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-highlight: #0284c7;
+
+  --vertex-default-bg: #ffffff;
+  --vertex-default-stroke: #94a3b8;
+  --vertex-default-text: #0f172a;
+
+  --vertex-selected-bg: #dbeafe;
+  --vertex-selected-stroke: #2563eb;
+  
+  --vertex-start-bg: #d1fae5;
+  --vertex-start-stroke: #059669;
+
+  --vertex-visited-bg: #f3e8ff;
+  --vertex-visited-stroke: #9333ea;
+
+  --vertex-active-bg: #fef3c7;
+  --vertex-active-stroke: #d97706;
+
+  --edge-default: #cbd5e1;
+  --edge-selected: #2563eb;
+  --edge-visited: #9333ea;
+  --edge-active: #d97706;
+
+  --grid-dot: rgba(0, 0, 0, 0.08);
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
