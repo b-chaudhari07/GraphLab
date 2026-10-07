@@ -13,12 +13,11 @@ import { TreeCanvas } from '../components/tree/TreeCanvas';
 import { TreeEducationalView } from '../components/tree/TreeEducationalView';
 import { ExecutionControls } from '../components/algorithm/ExecutionControls';
 import { OfficialOutput } from '../components/output/OfficialOutput';
-import { IsomorphismModal } from '../components/algorithm/IsomorphismModal';
 import { AdjacencyOverlayModal } from '../components/graph/AdjacencyOverlayModal';
 import { SAMPLE_BINARY_TREE } from '../tree/educationalData';
 import { generateTreeTraversalSteps } from '../tree/traversal';
 import { runAlgorithm } from '../algorithms/runner';
-import { Share2, Layers, GitBranch, Play, BookOpen } from 'lucide-react';
+import { Share2, GitBranch, Play, RotateCcw, BookOpen } from 'lucide-react';
 
 export const GraphLabPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -26,11 +25,10 @@ export const GraphLabPage: React.FC = () => {
   // Navigation State
   const [currentView, setCurrentView] = useState<NavItemView>('tree-traversals');
   const [treeTraversalMode, setTreeTraversalMode] = useState<TreeTraversalMode>('preorder');
-  const [hamiltonianMode] = useState<HamiltonianMode>('cycle');
+  const [hamiltonianMode, setHamiltonianMode] = useState<HamiltonianMode>('cycle');
 
   // Modal States
   const [isAboutOpen, setIsAboutOpen] = useState<boolean>(false);
-  const [isIsomorphismOpen, setIsIsomorphismOpen] = useState<boolean>(false);
   const [adjacencyModalType, setAdjacencyModalType] = useState<'list' | 'matrix' | null>(null);
 
   // Core Graph State
@@ -84,7 +82,7 @@ export const GraphLabPage: React.FC = () => {
   const handleSelectView = (view: NavItemView) => {
     setCurrentView(view);
 
-    if (view === 'connectivity' || view === 'eulerian' || view === 'hamiltonian' || view === 'isomorphism') {
+    if (view === 'connectivity' || view === 'eulerian' || view === 'hamiltonian') {
       setAlgorithm(view as SyllabusAlgorithmId);
     }
   };
@@ -92,11 +90,6 @@ export const GraphLabPage: React.FC = () => {
   // Run Graph Algorithm Handler
   const handleRunGraphAlgorithm = useCallback(() => {
     if (!executionConfig.selectedAlgorithmId) return;
-
-    if (executionConfig.selectedAlgorithmId === 'isomorphism') {
-      setIsIsomorphismOpen(true);
-      return;
-    }
 
     const fullConfig = {
       ...executionConfig,
@@ -121,7 +114,7 @@ export const GraphLabPage: React.FC = () => {
     [loadSteps]
   );
 
-  // Auto-initialize tree traversal on view switch
+  // Auto-initialize tree traversal or graph example on view switch
   useEffect(() => {
     if (currentView === 'tree-traversals') {
       const { steps } = generateTreeTraversalSteps(SAMPLE_BINARY_TREE, treeTraversalMode);
@@ -129,20 +122,31 @@ export const GraphLabPage: React.FC = () => {
     }
   }, [currentView, treeTraversalMode, loadSteps]);
 
+  // Helper to load valid example graphs
+  const handleLoadExampleForView = (view: NavItemView) => {
+    if (view === 'connectivity') {
+      loadPreset('connectivity-example');
+    } else if (view === 'eulerian') {
+      loadPreset('eulerian-example');
+    } else if (view === 'hamiltonian') {
+      loadPreset('hamiltonian-example');
+    }
+  };
+
   // Computed Official Output String & Conclusion Status
   const computedOfficialOutput = useMemo(() => {
     if (currentView === 'tree-traversals') {
       const { finalResultString } = generateTreeTraversalSteps(SAMPLE_BINARY_TREE, treeTraversalMode);
       if (currentStep?.dataStructures?.traversalPath) {
-        return `${treeTraversalMode.toUpperCase()} Traversal:\n${currentStep.dataStructures.traversalPath.join(' → ')}`;
+        return `${treeTraversalMode.toUpperCase()} TRAVERSAL:\n\n${currentStep.dataStructures.traversalPath.join(' → ')}`;
       }
-      return finalResultString;
+      return finalResultString.toUpperCase();
     }
 
     if (currentStep?.dataStructures?.finalConclusion) {
       const conc = currentStep.dataStructures.finalConclusion;
       const detailsStr = conc.details ? conc.details.join('\n') : '';
-      return `${conc.title}\n${conc.message}\n\n${detailsStr}`.trim();
+      return `${conc.title.toUpperCase()}\n\n${conc.message}\n\n${detailsStr}`.trim();
     }
 
     if (currentStep?.dataStructures?.resultSummary) {
@@ -150,11 +154,11 @@ export const GraphLabPage: React.FC = () => {
     }
 
     if (currentView === 'graph-builder') {
-      return `Graph State:\nVertices: ${vertices.length}\nEdges: ${edges.length}\nType: ${config.isDirected ? 'Directed' : 'Undirected'}\nWeights: ${config.isWeighted ? 'Weighted' : 'Unweighted'}`;
+      return `GRAPH STATUS:\nVertices: ${vertices.length}\nEdges: ${edges.length}\nType: ${config.isDirected ? 'Directed' : 'Undirected'}`;
     }
 
     return null;
-  }, [currentView, treeTraversalMode, currentStep, vertices.length, edges.length, config.isDirected, config.isWeighted]);
+  }, [currentView, treeTraversalMode, currentStep, vertices.length, edges.length, config.isDirected]);
 
   return (
     <div className="app-layout">
@@ -200,8 +204,6 @@ export const GraphLabPage: React.FC = () => {
                   ? 'Eulerian Path / Circuit'
                   : currentView === 'hamiltonian'
                   ? 'Hamiltonian Pathfinder'
-                  : currentView === 'isomorphism'
-                  ? 'Graph Isomorphism'
                   : currentView === 'graph-builder'
                   ? 'Graph Builder'
                   : currentView}
@@ -222,8 +224,6 @@ export const GraphLabPage: React.FC = () => {
                     ? 'Eulerian Path & Circuit Analysis'
                     : currentView === 'hamiltonian'
                     ? 'Hamiltonian Pathfinder'
-                    : currentView === 'isomorphism'
-                    ? 'Graph Isomorphism Checker'
                     : currentView === 'graph-builder'
                     ? 'Interactive Graph Builder'
                     : 'GraphLab Dashboard'}
@@ -237,8 +237,6 @@ export const GraphLabPage: React.FC = () => {
                     ? 'Verify Euler Theorem degree parities and construct edge-traversing paths.'
                     : currentView === 'hamiltonian'
                     ? 'Search for paths or cycles visiting every vertex exactly once.'
-                    : currentView === 'isomorphism'
-                    ? 'Compare structural equivalence and adjacency preservation between two graphs.'
                     : 'Construct, modify, and test custom graph structures.'}
                 </p>
               </div>
@@ -275,6 +273,10 @@ export const GraphLabPage: React.FC = () => {
 
             {(currentView === 'connectivity' || currentView === 'eulerian' || currentView === 'hamiltonian') && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button className="btn btn-outline btn-sm" onClick={() => handleLoadExampleForView(currentView)}>
+                  <RotateCcw size={13} /> Load Example
+                </button>
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)' }}>Start Vertex</label>
                   <select
@@ -283,34 +285,49 @@ export const GraphLabPage: React.FC = () => {
                     onChange={(e) => setStartVertex(e.target.value || null)}
                     style={{ padding: '4px 8px', fontSize: '0.8rem' }}
                   >
-                    <option value="">-- Node A (Default) --</option>
+                    <option value="">-- Node A --</option>
                     {vertices.map((v) => (
                       <option key={v.id} value={v.id}>Node {v.label}</option>
                     ))}
                   </select>
                 </div>
 
+                {currentView === 'hamiltonian' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)' }}>Target Mode</label>
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      <button
+                        className={`btn btn-sm ${hamiltonianMode === 'cycle' ? 'btn-primary' : 'btn-outline'}`}
+                        onClick={() => setHamiltonianMode('cycle')}
+                        style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                      >
+                        Cycle
+                      </button>
+                      <button
+                        className={`btn btn-sm ${hamiltonianMode === 'path' ? 'btn-primary' : 'btn-outline'}`}
+                        onClick={() => setHamiltonianMode('path')}
+                        style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                      >
+                        Path
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <button
                   className="btn btn-success btn-sm"
                   onClick={handleRunGraphAlgorithm}
                   disabled={status === 'running' || vertices.length === 0}
-                  style={{ marginTop: 14, fontWeight: 600 }}
+                  style={{ fontWeight: 600 }}
                 >
                   <Play size={14} /> Run Algorithm
                 </button>
               </div>
             )}
 
-            {currentView === 'isomorphism' && (
-              <button className="btn btn-primary btn-sm" onClick={() => setIsIsomorphismOpen(true)}>
-                <Layers size={14} /> Open Dual Graph Editor
-              </button>
-            )}
-
             {currentView === 'graph-builder' && (
               <div style={{ display: 'flex', gap: 6 }}>
-                <button className="btn btn-outline btn-sm" onClick={() => loadPreset('binary-tree')}>Preset Tree</button>
-                <button className="btn btn-outline btn-sm" onClick={() => loadPreset('complete-k4')}>Preset K4</button>
+                <button className="btn btn-outline btn-sm" onClick={() => loadPreset('complete-k4')}>Load Preset K4</button>
                 <button className="btn btn-danger btn-sm" onClick={() => { clearGraph(); resetExecution(); }}>Clear</button>
               </div>
             )}
@@ -351,8 +368,8 @@ export const GraphLabPage: React.FC = () => {
                     <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>Backtracking path & cycle discovery.</p>
                   </div>
                   <div style={{ padding: 12, borderRadius: 8, backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}>
-                    <strong style={{ color: 'var(--accent-amber)' }}>4. Graph Isomorphism</strong>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>Invariants and adjacency matrix bijection check.</p>
+                    <strong style={{ color: 'var(--accent-amber)' }}>4. Tree Traversals</strong>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>Preorder, Inorder, and Postorder binary tree traversals.</p>
                   </div>
                 </div>
               </div>
@@ -384,7 +401,7 @@ export const GraphLabPage: React.FC = () => {
           )}
         </div>
 
-        {/* Bottom Area: Controls + Official Output Box (Matching Mockups) */}
+        {/* Bottom Area: Controls + Official Output Box (Non-Overlapping Layout) */}
         {!currentView.startsWith('tree-') || currentView === 'tree-traversals' ? (
           <div
             style={{
@@ -393,9 +410,10 @@ export const GraphLabPage: React.FC = () => {
               borderTop: '1px solid var(--border-color)',
               padding: '10px 16px',
               display: 'grid',
-              gridTemplateColumns: '1fr 280px 320px',
+              gridTemplateColumns: '1fr 280px 340px',
               gap: 14,
               alignItems: 'center',
+              overflow: 'hidden',
             }}
           >
             {/* Step Information Panel */}
@@ -409,6 +427,7 @@ export const GraphLabPage: React.FC = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
+                overflow: 'hidden',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -445,10 +464,10 @@ export const GraphLabPage: React.FC = () => {
               />
             </div>
 
-            {/* Official Output Terminal Panel */}
-            <div style={{ height: '100%' }}>
+            {/* Official Output Terminal Panel (Non-overlapping participant) */}
+            <div style={{ height: '100%', overflow: 'hidden' }}>
               <OfficialOutput
-                title="Official Output"
+                title="OFFICIAL OUTPUT"
                 outputContent={computedOfficialOutput}
                 statusSuccess={currentStep?.dataStructures?.finalConclusion?.success ?? true}
               />
@@ -459,13 +478,6 @@ export const GraphLabPage: React.FC = () => {
 
       {/* Educational Information Modal */}
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
-
-      {/* Dual Graph Isomorphism Modal */}
-      <IsomorphismModal
-        isOpen={isIsomorphismOpen}
-        onClose={() => setIsIsomorphismOpen(false)}
-        graphA={{ vertices, edges, config }}
-      />
 
       {/* Adjacency List & Matrix Popover Modal */}
       <AdjacencyOverlayModal

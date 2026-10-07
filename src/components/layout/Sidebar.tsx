@@ -11,8 +11,6 @@ import {
   BookOpen,
   ChevronDown,
   ChevronRight,
-  Layers,
-  HelpCircle,
   BookMarked,
 } from 'lucide-react';
 
@@ -97,14 +95,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView }) =
                 <Sparkles size={16} />
                 <span>Hamiltonian Pathfinder</span>
               </button>
-
-              <button
-                className={getItemClass('isomorphism')}
-                onClick={() => onSelectView('isomorphism')}
-              >
-                <Layers size={16} />
-                <span>Graph Isomorphism</span>
-              </button>
             </div>
           )}
         </div>
@@ -138,22 +128,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView }) =
               </button>
 
               <button
-                className={getItemClass('tree-properties')}
-                onClick={() => onSelectView('tree-properties')}
-              >
-                <BookOpen size={16} />
-                <span>Properties</span>
-              </button>
-
-              <button
-                className={getItemClass('tree-types')}
-                onClick={() => onSelectView('tree-types')}
-              >
-                <Layers size={16} />
-                <span>Types of Trees</span>
-              </button>
-
-              <button
                 className={getItemClass('tree-traversals')}
                 onClick={() => onSelectView('tree-traversals')}
               >
@@ -175,17 +149,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView }) =
             <Info size={16} />
             <span>About Project</span>
           </button>
-        </div>
-      </div>
-
-      {/* Unit V Bottom Badge */}
-      <div className="sidebar-footer">
-        <div className="unit-badge">
-          <HelpCircle size={16} color="var(--accent-blue)" />
-          <div>
-            <div className="unit-title">Unit V</div>
-            <div className="unit-sub">Graph Theory & Trees</div>
-          </div>
         </div>
       </div>
     </aside>

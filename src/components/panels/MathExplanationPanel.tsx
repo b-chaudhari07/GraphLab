@@ -56,7 +56,7 @@ export const MathExplanationPanel: React.FC<MathExplanationPanelProps> = ({
                 border: '1px dashed var(--border-color)',
               }}
             >
-              <strong>Module V Standards:</strong> Evaluates connectivity, Eulerian degree parities, Hamiltonian backtracking, and isomorphism invariants.
+              <strong>Module V Standards:</strong> Evaluates connectivity, Eulerian degree parities, Hamiltonian backtracking, and Tree traversals.
             </div>
           </div>
         ) : (

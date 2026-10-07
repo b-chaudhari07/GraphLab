@@ -12,12 +12,9 @@ export type NavItemView =
   | 'connectivity'
   | 'eulerian'
   | 'hamiltonian'
-  | 'isomorphism'
   // Tree items
   | 'tree-intro'
   | 'tree-terminology'
-  | 'tree-properties'
-  | 'tree-types'
   | 'tree-traversals'
   // Resource items
   | 'theory'
