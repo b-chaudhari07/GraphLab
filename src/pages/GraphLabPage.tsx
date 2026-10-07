@@ -402,15 +402,16 @@ export const GraphLabPage: React.FC = () => {
         </div>
 
         {/* Bottom Area: Controls + Official Output Box (Non-Overlapping Layout) */}
+        {/* Bottom Area: Controls Bar */}
         {!currentView.startsWith('tree-') || currentView === 'tree-traversals' ? (
           <div
             style={{
-              height: 140,
+              height: 120,
               backgroundColor: 'var(--bg-secondary)',
               borderTop: '1px solid var(--border-color)',
               padding: '10px 16px',
               display: 'grid',
-              gridTemplateColumns: '1fr 280px 340px',
+              gridTemplateColumns: '1fr 300px',
               gap: 14,
               alignItems: 'center',
               overflow: 'hidden',
@@ -463,18 +464,18 @@ export const GraphLabPage: React.FC = () => {
                 onSpeedChange={setAnimationSpeed}
               />
             </div>
-
-            {/* Official Output Terminal Panel (Non-overlapping participant) */}
-            <div style={{ height: '100%', overflow: 'hidden' }}>
-              <OfficialOutput
-                title="OFFICIAL OUTPUT"
-                outputContent={computedOfficialOutput}
-                statusSuccess={currentStep?.dataStructures?.finalConclusion?.success ?? true}
-              />
-            </div>
           </div>
         ) : null}
       </div>
+
+      {/* Floating Draggable & Resizable Official Output Panel */}
+      {(!currentView.startsWith('tree-') || currentView === 'tree-traversals') && (
+        <OfficialOutput
+          title="OFFICIAL OUTPUT"
+          outputContent={computedOfficialOutput}
+          statusSuccess={currentStep?.dataStructures?.finalConclusion?.success ?? true}
+        />
+      )}
 
       {/* Educational Information Modal */}
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
