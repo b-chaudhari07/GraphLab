@@ -1,9 +1,8 @@
 import React from 'react';
-import { Sun, Moon, HelpCircle, RefreshCw, Network } from 'lucide-react';
-import type { ThemeMode } from '../../types/visualization';
+import { Sun, Moon, Info, RotateCcw } from 'lucide-react';
 
 interface HeaderProps {
-  theme: ThemeMode;
+  theme: 'dark' | 'light';
   toggleTheme: () => void;
   onReset: () => void;
   onOpenAbout: () => void;
@@ -21,80 +20,80 @@ export const Header: React.FC<HeaderProps> = ({
         height: 'var(--header-height)',
         backgroundColor: 'var(--bg-secondary)',
         borderBottom: '1px solid var(--border-color)',
-        padding: '0 24px',
+        padding: '0 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        zIndex: 20,
-        boxShadow: 'var(--shadow-sm)',
+        userSelect: 'none',
       }}
     >
-      {/* Title & Course Info */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 10,
-            background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-indigo))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.4)',
-          }}
-        >
-          <Network size={22} />
-        </div>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <h1
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                background: 'linear-gradient(90deg, #f8fafc, #94a3b8)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              GraphLab
-            </h1>
-            <span className="badge badge-purple">Discrete Math (7MA206)</span>
-            <span className="badge badge-blue">S.Y. B.Tech IT</span>
-            <span className="badge badge-emerald">Module V</span>
-          </div>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-            Interactive Graph Algorithm Visualizer • Track B Computational Tool
-          </p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <h2 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+          GraphLab <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)' }}>| Discrete Mathematics 7MA206</span>
+        </h2>
       </div>
 
-      {/* Header Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Reset Action */}
         <button
           className="btn btn-outline btn-sm"
           onClick={onReset}
-          title="Reset Graph Canvas"
+          title="Reset Canvas & Execution"
         >
-          <RefreshCw size={14} /> Clear / Reset
+          <RotateCcw size={14} /> Reset
         </button>
 
-        <button
-          className="btn btn-outline btn-sm"
+        {/* Theme Switch Pill (Sun/Moon switch) */}
+        <div
           onClick={toggleTheme}
-          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 8px',
+            borderRadius: 9999,
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
         >
-          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-          {theme === 'dark' ? 'Light' : 'Dark'}
-        </button>
+          <Sun size={14} color={theme === 'light' ? 'var(--accent-amber)' : 'var(--text-muted)'} />
+          <div
+            style={{
+              width: 28,
+              height: 14,
+              borderRadius: 10,
+              backgroundColor: theme === 'dark' ? 'var(--accent-blue)' : '#cbd5e1',
+              position: 'relative',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <div
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                backgroundColor: '#ffffff',
+                position: 'absolute',
+                top: 2,
+                left: theme === 'dark' ? 16 : 2,
+                transition: 'all 0.2s ease',
+              }}
+            />
+          </div>
+          <Moon size={14} color={theme === 'dark' ? 'var(--accent-indigo)' : 'var(--text-muted)'} />
+        </div>
 
+        {/* About Info Icon Button */}
         <button
-          className="btn btn-outline btn-sm"
+          className="btn btn-outline btn-sm btn-icon"
           onClick={onOpenAbout}
-          title="Project & Syllabus Information"
+          title="Educational Information"
+          style={{ borderRadius: '50%' }}
         >
-          <HelpCircle size={14} /> About / Syllabus
+          <Info size={16} />
         </button>
       </div>
     </header>

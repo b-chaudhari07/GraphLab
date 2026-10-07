@@ -27,6 +27,7 @@ interface GraphCanvasProps {
   validationError?: string | null;
   clearValidationError?: () => void;
   setValidationError?: (msg: string | null) => void;
+  onOpenAdjacency?: (type: 'list' | 'matrix') => void;
 }
 
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
@@ -50,6 +51,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   validationError,
   clearValidationError,
   setValidationError,
+  onOpenAdjacency,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [draggingVertexId, setDraggingVertexId] = useState<string | null>(null);
@@ -238,6 +240,35 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           <Trash2 size={14} /> Delete
         </button>
       </div>
+
+      {/* Top-Right Adjacency List / Matrix Overlay Buttons */}
+      {onOpenAdjacency && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            zIndex: 10,
+            display: 'flex',
+            gap: 8,
+          }}
+        >
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={() => onOpenAdjacency('list')}
+            style={{ backgroundColor: 'var(--bg-card)', backdropFilter: 'blur(8px)', fontSize: '0.78rem' }}
+          >
+            Show as List
+          </button>
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={() => onOpenAdjacency('matrix')}
+            style={{ backgroundColor: 'var(--bg-card)', backdropFilter: 'blur(8px)', fontSize: '0.78rem' }}
+          >
+            Show as Matrix
+          </button>
+        </div>
+      )}
 
       {/* Pending Edge Helper Tooltip */}
       {canvasMode === 'add-edge' && sourceVertexForPendingEdge && (
