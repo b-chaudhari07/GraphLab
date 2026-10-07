@@ -8,12 +8,10 @@ import type { AlgorithmConfig, AlgorithmStep } from '../types/algorithm';
 import { generateConnectivitySteps } from './connectivity/connectivityExplorer';
 import { generateEulerianSteps } from './eulerian/eulerianAnalyzer';
 import { generateHamiltonianSteps } from './hamiltonian/hamiltonianPathfinder';
-import { generateIsomorphismSteps } from './isomorphism/isomorphismChecker';
 
 export function runAlgorithm(
   config: AlgorithmConfig,
-  graphA: { vertices: Vertex[]; edges: Edge[]; config: GraphConfig },
-  graphB?: { vertices: Vertex[]; edges: Edge[]; config: GraphConfig }
+  graphA: { vertices: Vertex[]; edges: Edge[]; config: GraphConfig }
 ): AlgorithmStep[] {
   const { selectedAlgorithmId, startVertexId, hamiltonianMode = 'cycle' } = config;
 
@@ -28,12 +26,6 @@ export function runAlgorithm(
 
     case 'hamiltonian':
       return generateHamiltonianSteps(graphA.vertices, graphA.edges, graphA.config, startVertexId, hamiltonianMode);
-
-    case 'isomorphism':
-      if (!graphB) {
-        return generateIsomorphismSteps(graphA, graphA);
-      }
-      return generateIsomorphismSteps(graphA, graphB);
 
     default:
       return [];

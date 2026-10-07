@@ -2,7 +2,7 @@ import React from 'react';
 import type { SyllabusAlgorithmId, HamiltonianMode } from '../../types/algorithm';
 import type { Vertex } from '../../types/graph';
 import { SYLLABUS_ALGORITHMS, getAlgorithmById } from '../../algorithms';
-import { Cpu, Clock, HardDrive, Play, Network } from 'lucide-react';
+import { Cpu, Clock, HardDrive, Play } from 'lucide-react';
 
 interface AlgorithmPanelProps {
   selectedAlgorithmId: SyllabusAlgorithmId | null;
@@ -13,7 +13,6 @@ interface AlgorithmPanelProps {
   onSelectStartVertex: (vertexId: string | null) => void;
   onSelectHamiltonianMode?: (mode: HamiltonianMode) => void;
   onRunAlgorithm: () => void;
-  onOpenIsomorphismModal?: () => void;
   isRunning?: boolean;
 }
 
@@ -26,7 +25,6 @@ export const AlgorithmPanel: React.FC<AlgorithmPanelProps> = ({
   onSelectStartVertex,
   onSelectHamiltonianMode,
   onRunAlgorithm,
-  onOpenIsomorphismModal,
   isRunning = false,
 }) => {
   const currentAlgorithm = getAlgorithmById(selectedAlgorithmId);
@@ -102,19 +100,6 @@ export const AlgorithmPanel: React.FC<AlgorithmPanelProps> = ({
                 Hamiltonian Path
               </button>
             </div>
-          </div>
-        )}
-
-        {/* Configuration for Graph Isomorphism Dual Editor */}
-        {selectedAlgorithmId === 'isomorphism' && onOpenIsomorphismModal && (
-          <div className="input-group">
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={onOpenIsomorphismModal}
-              style={{ width: '100%', marginTop: 4 }}
-            >
-              <Network size={14} /> Open Dual Graph Editor (Graph A & B)
-            </button>
           </div>
         )}
 

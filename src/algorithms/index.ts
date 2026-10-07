@@ -42,18 +42,6 @@ export const SYLLABUS_ALGORITHMS: AlgorithmInfo[] = [
     timeComplexity: 'O(N!)',
     spaceComplexity: 'O(N)',
   },
-  {
-    id: 'isomorphism',
-    name: 'Graph Isomorphism Checker',
-    moduleSection: 'Module V — Graph Theory',
-    description: 'Checks structural equivalence between Graph A and Graph B via invariant checks and candidate vertex bijections.',
-    syllabusTopic: 'Graph Isomorphism & Invariants',
-    requiresStartVertex: false,
-    supportsDirected: true,
-    supportsWeighted: false,
-    timeComplexity: 'O(N!)',
-    spaceComplexity: 'O(N)',
-  },
 ];
 
 export function getAlgorithmById(id: SyllabusAlgorithmId | null): AlgorithmInfo | undefined {

@@ -6,8 +6,7 @@
 export type SyllabusAlgorithmId =
   | 'connectivity'
   | 'eulerian'
-  | 'hamiltonian'
-  | 'isomorphism';
+  | 'hamiltonian';
 
 export interface AlgorithmInfo {
   id: SyllabusAlgorithmId;
@@ -39,7 +38,6 @@ export interface DataStructureSnapshot {
   componentMap?: Record<string, number>;
   traversalPath?: string[];
   vertexDegrees?: Record<string, number>;
-  isomorphismMapping?: Record<string, string>;
   resultSummary?: string;
   finalConclusion?: {
     success: boolean;
